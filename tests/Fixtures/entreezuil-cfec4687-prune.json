@@ -1,0 +1,284 @@
+{
+    "seed": "wr2926-fixture-seed",
+    "produced_by": "cfec46874e48d6f52f139938230cd69360c5637b",
+    "prune": {
+        "rowsPruned": {
+            "user_audit_logs": 3,
+            "branch_audit_logs": 2,
+            "sms_event_logs": 3
+        },
+        "refused": []
+    },
+    "verify": {
+        "user_audit_logs": [
+            "Verified",
+            2,
+            2,
+            5
+        ],
+        "branch_audit_logs": [
+            "Verified",
+            0,
+            0,
+            2
+        ],
+        "kiosk_audit_logs": [
+            "Empty",
+            0,
+            0,
+            null
+        ],
+        "user_presence_audit_logs": [
+            "Empty",
+            0,
+            0,
+            null
+        ],
+        "auth_event_logs": [
+            "Verified",
+            3,
+            3,
+            3
+        ],
+        "sms_event_logs": [
+            "Verified",
+            2,
+            2,
+            5
+        ]
+    },
+    "tables": {
+        "audit_chain_anchors": [
+            {
+                "id": 1,
+                "chain": "user_audit_logs",
+                "through_id": 3,
+                "anchor_hash": "a50e5fad622b20086f49bfb7a693c7313ac52da295f5d9b5de12165536d144cd",
+                "mac": "ffc320e783dc1dfb3c7316c0972108606aae4928a5899841ca96c13be74e02ce"
+            },
+            {
+                "id": 2,
+                "chain": "branch_audit_logs",
+                "through_id": 2,
+                "anchor_hash": "c06450e97d882981609b082ef670d6bdde2be4d1695a5f3d5a13b76c717bae9c",
+                "mac": "306a57d0c3c9832ce32ebd3c0e3c83bc4990bc889ac8076aa95a5be4072cb0ca"
+            },
+            {
+                "id": 3,
+                "chain": "sms_event_logs",
+                "through_id": 3,
+                "anchor_hash": "56905228e29b7cd102f4822d5151e33211dea95dc28a94e4c455b9d5e2ce7e8f",
+                "mac": "ca122c8bc7a86a13328e6679c2bd5768057915eacded720231fc6e959b00c75a"
+            }
+        ],
+        "user_audit_logs": [
+            {
+                "id": 4,
+                "actor_type": 1,
+                "user_id": null,
+                "user_name": null,
+                "user_email": null,
+                "user_role": null,
+                "action": 1,
+                "audited_user_id": 100,
+                "old_values": "{\"name\":\"Oud\",\"z\":{\"b\":1,\"a\":2}}",
+                "new_values": "{\"name\":\"Nieuw\"}",
+                "ip_address": "10.0.0.1",
+                "user_agent": "fixture",
+                "url": "POST /api/x",
+                "hash": "13e4272e1e2d3c29d28c9535418a35237e2b4f4e8d33f61ed6a39b12b15cb08b",
+                "created_at": "2027-01-01 00:00:00",
+                "hash_version": 2
+            },
+            {
+                "id": 5,
+                "actor_type": 1,
+                "user_id": null,
+                "user_name": null,
+                "user_email": null,
+                "user_role": null,
+                "action": 1,
+                "audited_user_id": 100,
+                "old_values": "{\"name\":\"Oud\",\"z\":{\"b\":1,\"a\":2}}",
+                "new_values": "{\"name\":\"Nieuw\"}",
+                "ip_address": "10.0.0.1",
+                "user_agent": "fixture",
+                "url": "POST /api/x",
+                "hash": "f6525a61a89bfa25ebdf104d73b0e492b6cceef081703f1adc6211d58d072c32",
+                "created_at": "2028-01-01 10:00:00",
+                "hash_version": 2
+            }
+        ],
+        "sms_event_logs": [
+            {
+                "id": 4,
+                "actor_type": 1,
+                "user_id": null,
+                "user_name": null,
+                "user_email": null,
+                "user_role": null,
+                "recipient_user_ids": "[1,2]",
+                "recipient_count": 2,
+                "message_body": "Bericht",
+                "ip_address": "10.0.0.1",
+                "user_agent": "fixture",
+                "url": "POST /api/x",
+                "hash": "cd6238ca0649adee99c4e939cd2d334763c4796cf808b3daa6f21f5cdb6bec0e",
+                "created_at": "2027-01-01 00:00:00",
+                "actor_kiosk_id": null,
+                "hash_version": 2
+            },
+            {
+                "id": 5,
+                "actor_type": 1,
+                "user_id": null,
+                "user_name": null,
+                "user_email": null,
+                "user_role": null,
+                "recipient_user_ids": "[1,2]",
+                "recipient_count": 2,
+                "message_body": "Bericht",
+                "ip_address": "10.0.0.1",
+                "user_agent": "fixture",
+                "url": "POST /api/x",
+                "hash": "21696b9e11119ef0bd8d016774b63942660de1312c70cc874e1b18d39ea3c40b",
+                "created_at": "2028-01-01 10:00:00",
+                "actor_kiosk_id": null,
+                "hash_version": 2
+            }
+        ],
+        "auth_event_logs": [
+            {
+                "id": 1,
+                "event_type": 7,
+                "actor_type": 1,
+                "user_id": null,
+                "user_name": null,
+                "user_email": null,
+                "user_role": null,
+                "target_email": null,
+                "ip_address": null,
+                "user_agent": null,
+                "url": "artisan audit:prune user_audit_logs rows=3 through_id=3 before=2026-06-15T12:00:00+00:00",
+                "hash": "17e893eeb82cd184e36d38f4b34927123065ab1f40c70a854fb5c9b02af2dbe7",
+                "created_at": "2028-06-15 12:00:00",
+                "hash_version": 2
+            },
+            {
+                "id": 2,
+                "event_type": 7,
+                "actor_type": 1,
+                "user_id": null,
+                "user_name": null,
+                "user_email": null,
+                "user_role": null,
+                "target_email": null,
+                "ip_address": null,
+                "user_agent": null,
+                "url": "artisan audit:prune branch_audit_logs rows=2 through_id=2 before=2026-06-15T12:00:00+00:00",
+                "hash": "954c3296446b821861a85729826c2de61a9e356c453a655087f990037cb2d12a",
+                "created_at": "2028-06-15 12:00:00",
+                "hash_version": 2
+            },
+            {
+                "id": 3,
+                "event_type": 7,
+                "actor_type": 1,
+                "user_id": null,
+                "user_name": null,
+                "user_email": null,
+                "user_role": null,
+                "target_email": null,
+                "ip_address": null,
+                "user_agent": null,
+                "url": "artisan audit:prune sms_event_logs rows=3 through_id=3 before=2026-06-15T12:00:00+00:00",
+                "hash": "bdd21975dc28bdce0fb5bb3b87b15206ec36211409bbf5ab03bf98ee1123db50",
+                "created_at": "2028-06-15 12:00:00",
+                "hash_version": 2
+            }
+        ],
+        "branch_audit_logs": [],
+        "audit_chain_locks": [
+            {
+                "chain": "auth_event_logs"
+            },
+            {
+                "chain": "branch_audit_logs"
+            },
+            {
+                "chain": "kiosk_audit_logs"
+            },
+            {
+                "chain": "sms_event_logs"
+            },
+            {
+                "chain": "user_audit_logs"
+            },
+            {
+                "chain": "user_presence_audit_logs"
+            }
+        ]
+    },
+    "append_to_emptied_branch_chain": {
+        "at": "2028-07-01 08:00:00",
+        "hash": "20514b0fa8240f6a4a509ff256aad8f32a20d84419d65721b56c75abd5d1a34a"
+    },
+    "anchor_mac_vectors": [
+        {
+            "seed": "wr2926-fixture-seed",
+            "chain": "user_audit_logs",
+            "through_id": 3,
+            "anchor_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "mac": "bd9ddf6246dc73b9a0d3f10746a9722e3bf16a33c4ca6717e9b48c680a839759"
+        },
+        {
+            "seed": "",
+            "chain": "user_audit_logs",
+            "through_id": 3,
+            "anchor_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "mac": "0a246375d224dc232e85352532feea10775c5afd17e7ee822014ed577cb43809"
+        },
+        {
+            "seed": "wr2926-fixture-seed",
+            "chain": "auth_event_logs",
+            "through_id": 1,
+            "anchor_hash": "2d711642b726b04401627ca9fbac32f5c8530fb1903cc4db02258717921a4881",
+            "mac": "a22aa390399598a7e63d67e7c727d9abae124c4fcdd7686c2a5dc803fbba47d1"
+        },
+        {
+            "seed": "",
+            "chain": "auth_event_logs",
+            "through_id": 1,
+            "anchor_hash": "2d711642b726b04401627ca9fbac32f5c8530fb1903cc4db02258717921a4881",
+            "mac": "dd37f63fba9b01ae58a9fd15c0514448d227de58e4abc7053289c279ca05b546"
+        },
+        {
+            "seed": "wr2926-fixture-seed",
+            "chain": "sms_event_logs",
+            "through_id": 42,
+            "anchor_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+            "mac": "8f4da96f876c2e8d1d6e04f49bab33e8be6cbd7b2593900bfb0937f17683b8c1"
+        },
+        {
+            "seed": "",
+            "chain": "sms_event_logs",
+            "through_id": 42,
+            "anchor_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+            "mac": "7961352f887f96e70836054d240a9825c53c0b84e08d6b4814ee6365ced2d6ef"
+        },
+        {
+            "seed": "wr2926-fixture-seed",
+            "chain": "ch\u00e4in \"q\"",
+            "through_id": 9223372036854775807,
+            "anchor_hash": "ab|cd",
+            "mac": "a659e5d995fc59f21825eac327e367bb516365c0842c17c8af9af1324917bfd0"
+        },
+        {
+            "seed": "",
+            "chain": "ch\u00e4in \"q\"",
+            "through_id": 9223372036854775807,
+            "anchor_hash": "ab|cd",
+            "mac": "53e405eae0f611a9a9bc61782a83e414f12fcbdf3150aa467c4aef430d9c52ab"
+        }
+    ]
+}
