@@ -58,7 +58,7 @@ jobs:
                   awk -v ver="$VERSION" '
                       /^## \[/ {
                           if (found) exit
-                          if ($0 ~ "\\[" ver "\\]") found = 1
+                          if (index($0, "## [" ver "]") == 1) found = 1
                           next
                       }
                       found { print }
