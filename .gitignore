@@ -1,0 +1,10 @@
+/vendor/
+/.phpunit.cache/
+/.phpunit.result.cache
+/.idea/
+/.vscode/
+/build/
+.DS_Store
+
+# Agent-harness worktrees (war-room agents) — never belongs in history
+.claude/worktrees/

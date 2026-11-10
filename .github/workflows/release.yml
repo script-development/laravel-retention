@@ -1,0 +1,85 @@
+# Release workflow: runs on a v* tag push and creates the GitHub release. It
+# does not publish the package and cannot stop a publish: packagist.org
+# publishes the version from the same tag push through the repository's
+# push-event webhook. A red `verify` blocks only the GitHub release below.
+#
+# `verify` is a subset of the PR gate: format check, phpstan and the suite,
+# installed from composer.lock. It omits `composer audit`, the coverage gate,
+# mutation testing and the lowest-dependencies leg.
+
+name: Release
+
+on:
+    push:
+        tags:
+            - 'v*'
+
+jobs:
+    verify:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+            - name: Setup PHP 8.5
+              uses: shivammathur/setup-php@728c6c6b8cf02c2e48117716a91ee48313958a19 # v2
+              with:
+                  php-version: '8.5'
+                  coverage: none
+                  tools: composer:v2
+
+            - name: Install dependencies
+              run: composer install --prefer-dist --no-progress --no-interaction
+
+            - name: Format check
+              run: composer format:check
+
+            - name: Static analysis
+              run: composer phpstan
+
+            - name: Tests
+              run: composer test
+
+    release:
+        needs: verify
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  fetch-depth: 0
+
+            - name: Extract changelog for tag
+              id: changelog
+              run: |
+                  set -euo pipefail
+                  TAG="${GITHUB_REF#refs/tags/}"
+                  VERSION="${TAG#v}"
+                  awk -v ver="$VERSION" '
+                      /^## \[/ {
+                          if (found) exit
+                          if (index($0, "## [" ver "]") == 1) found = 1
+                          next
+                      }
+                      found { print }
+                  ' CHANGELOG.md > release-notes.md
+
+                  # awk exits 0 having printed nothing when the tag has no matching heading; an empty or whitespace-only body would publish empty notes on a green job.
+                  if ! grep -q '[^[:space:]]' release-notes.md; then
+                      echo "::error::CHANGELOG.md has no content under a [$VERSION] heading (tag $TAG), so the release would publish with empty notes."
+                      echo "Headings present in CHANGELOG.md:"
+                      grep '^## \[' CHANGELOG.md || echo "  (none — the file has no version headings at all)"
+                      exit 1
+                  fi
+
+                  echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+            - name: Create GitHub release
+              # The tag reaches the shell as data through env, never as text the expression expands into the script.
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  TAG: ${{ steps.changelog.outputs.tag }}
+              run: |
+                  gh release create "$TAG" \
+                      --title "$TAG" \
+                      --notes-file release-notes.md
