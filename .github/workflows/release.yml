@@ -75,9 +75,11 @@ jobs:
                   echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
             - name: Create GitHub release
+              # The tag reaches the shell as data through env, never as text the expression expands into the script.
               env:
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  TAG: ${{ steps.changelog.outputs.tag }}
               run: |
-                  gh release create "${{ steps.changelog.outputs.tag }}" \
-                      --title "${{ steps.changelog.outputs.tag }}" \
+                  gh release create "$TAG" \
+                      --title "$TAG" \
                       --notes-file release-notes.md
