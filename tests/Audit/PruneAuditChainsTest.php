@@ -5,7 +5,6 @@ declare(strict_types = 1);
 namespace ScriptDevelopment\LaravelRetention\Tests\Audit;
 
 use Carbon\CarbonImmutable;
-use Closure;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Support\Facades\DB;
 use Override;
@@ -16,11 +15,13 @@ use ScriptDevelopment\LaravelRetention\Audit\AnchorMac;
 use ScriptDevelopment\LaravelRetention\Audit\AuditChainAnchor;
 use ScriptDevelopment\LaravelRetention\Audit\AuditChainPruneResultDto;
 use ScriptDevelopment\LaravelRetention\Audit\ChainStartResolver;
+use ScriptDevelopment\LaravelRetention\Audit\Exceptions\ChainOnAnotherConnection;
 use ScriptDevelopment\LaravelRetention\Audit\PruneAuditChains;
 use ScriptDevelopment\LaravelRetention\Tests\Support\AlphaAuditLog;
 use ScriptDevelopment\LaravelRetention\Tests\Support\BetaAuditLog;
 use ScriptDevelopment\LaravelRetention\Tests\Support\Chains;
 use ScriptDevelopment\LaravelRetention\Tests\Support\DemoHashChains;
+use ScriptDevelopment\LaravelRetention\Tests\Support\ElsewhereAuditLog;
 use ScriptDevelopment\LaravelRetention\Tests\Support\LockMarkingSQLiteGrammar;
 use ScriptDevelopment\LaravelRetention\Tests\Support\ScopedAuditLog;
 use ScriptDevelopment\LaravelRetention\Tests\Support\SoftAuditLog;
@@ -356,17 +357,79 @@ final class PruneAuditChainsTest extends TestCase
     }
 
     #[Test]
-    public function it_retries_each_chunk_transaction_three_times(): void
+    public function it_retries_a_chunk_that_deadlocks_up_to_three_attempts(): void
+    {
+        $ids = Chains::append(AlphaAuditLog::class, '2020-01-01 10:00:00', '2028-01-01 10:00:00');
+        $attempts = 0;
+        $this->demo()->onRecordPrune = function() use (&$attempts): void {
+            if (++$attempts < 3) {
+                throw new RuntimeException('Deadlock found when trying to get lock');
+            }
+        };
+
+        $result = $this->prune();
+
+        self::assertSame(3, $attempts);
+        self::assertSame(['alpha_audit_logs' => 1], $result->rowsPruned);
+        self::assertSame([$ids[1]], Chains::ids(AlphaAuditLog::class));
+        self::assertCount(1, AuditChainAnchor::query()->get());
+    }
+
+    #[Test]
+    public function it_gives_up_on_a_chunk_that_deadlocks_a_third_time(): void
+    {
+        $ids = Chains::append(AlphaAuditLog::class, '2020-01-01 10:00:00', '2028-01-01 10:00:00');
+        $attempts = 0;
+        $this->demo()->onRecordPrune = function() use (&$attempts): never {
+            $attempts++;
+
+            throw new RuntimeException('Deadlock found when trying to get lock');
+        };
+
+        try {
+            $this->prune();
+            self::fail('a third deadlock was retried');
+        } catch (RuntimeException $runtimeException) {
+            self::assertSame('Deadlock found when trying to get lock', $runtimeException->getMessage());
+        }
+
+        self::assertSame(3, $attempts);
+        self::assertSame($ids, Chains::ids(AlphaAuditLog::class));
+    }
+
+    #[Test]
+    public function it_refuses_a_chain_on_another_connection_before_it_touches_any_chain(): void
+    {
+        $this->demo()->chainModels = [AlphaAuditLog::class, ElsewhereAuditLog::class];
+        $alpha = Chains::append(AlphaAuditLog::class, '2020-01-01 10:00:00', '2028-01-01 10:00:00');
+        $elsewhere = Chains::append(ElsewhereAuditLog::class, '2020-01-01 10:00:00', '2028-01-01 10:00:00');
+
+        try {
+            $this->prune();
+            self::fail('a chain on another connection was pruned');
+        } catch (ChainOnAnotherConnection $chainOnAnotherConnection) {
+            self::assertSame('elsewhere_audit_logs is on connection elsewhere, the prune on testing: its deletes could not share the transaction that moves its anchor.', $chainOnAnotherConnection->getMessage());
+        }
+
+        self::assertSame($alpha, Chains::ids(AlphaAuditLog::class));
+        self::assertSame($elsewhere, Chains::ids(ElsewhereAuditLog::class));
+        self::assertFalse(AuditChainAnchor::query()->exists());
+        self::assertSame([], $this->demo()->calls);
+    }
+
+    #[Test]
+    public function it_refuses_when_it_cannot_name_its_own_connection(): void
     {
         Chains::append(AlphaAuditLog::class, '2020-01-01 10:00:00');
-        $real = $this->app->make(ConnectionInterface::class);
-        $connection = $this->createMock(ConnectionInterface::class);
-        $connection->expects(self::once())->method('transaction')->with(self::isInstanceOf(Closure::class), 3)
-            ->willReturnCallback(fn(Closure $callback, int $attempts): mixed => $real->transaction($callback, $attempts));
 
-        new PruneAuditChains($connection, $this->demo(), new ChainStartResolver, self::SEED, 24)->execute();
+        try {
+            new PruneAuditChains($this->createStub(ConnectionInterface::class), $this->demo(), new ChainStartResolver, self::SEED, 24)->execute();
+            self::fail('a prune on an unnamed connection ran');
+        } catch (ChainOnAnotherConnection $chainOnAnotherConnection) {
+            self::assertStringStartsWith('audit_chain_anchors is on connection testing, the prune on an unnamed connection', $chainOnAnotherConnection->getMessage());
+        }
 
-        self::assertSame([], Chains::ids(AlphaAuditLog::class));
+        self::assertCount(1, Chains::ids(AlphaAuditLog::class));
     }
 
     /**

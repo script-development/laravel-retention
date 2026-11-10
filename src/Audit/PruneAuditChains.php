@@ -7,10 +7,12 @@ namespace ScriptDevelopment\LaravelRetention\Audit;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Container\Attributes\Config;
+use Illuminate\Database\Connection;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Eloquent\Model;
 use RuntimeException;
 use ScriptDevelopment\LaravelRetention\Audit\Contracts\HashChains;
+use ScriptDevelopment\LaravelRetention\Audit\Exceptions\ChainOnAnotherConnection;
 use ScriptDevelopment\LaravelRetention\Audit\Exceptions\PrunedRowCountMismatch;
 use UnexpectedValueException;
 
@@ -51,8 +53,10 @@ final readonly class PruneAuditChains
         $rowsPruned = [];
         $refusedAtRowId = [];
 
-        foreach ($this->hashChains->chains() as $modelClass) {
-            $model = new $modelClass;
+        $models = array_map(fn(string $modelClass): Model => new $modelClass, $this->hashChains->chains());
+        $this->assertOneConnection([new AuditChainAnchor, ...$models]);
+
+        foreach ($models as $model) {
             $table = $model->getTable();
             $throughId = $this->lastExpiredId($model, $cutoff);
 
@@ -74,6 +78,25 @@ final readonly class PruneAuditChains
         }
 
         return new AuditChainPruneResultDto($rowsPruned, $refusedAtRowId);
+    }
+
+    /**
+     * The prune's transaction runs on its own connection, so every chain and the
+     * anchor store must live there. Checked for all of them before any is touched.
+     *
+     * @param list<Model> $models
+     */
+    private function assertOneConnection(array $models): void
+    {
+        $pruneConnection = $this->connection instanceof Connection ? $this->connection->getName() : null;
+
+        foreach ($models as $model) {
+            $modelConnection = $model->getConnection()->getName();
+
+            if ($pruneConnection === null || $modelConnection !== $pruneConnection) {
+                throw new ChainOnAnotherConnection($model->getTable(), $modelConnection, $pruneConnection);
+            }
+        }
     }
 
     /**

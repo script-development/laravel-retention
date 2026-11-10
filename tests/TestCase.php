@@ -25,6 +25,7 @@ abstract class TestCase extends Orchestra
     protected function defineEnvironment($app): void
     {
         $app['config']->set('database.default', 'testing');
+        $app['config']->set('database.connections.elsewhere', ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => '', 'foreign_key_constraints' => true]);
         $app['config']->set('audit.hash_seed', self::SEED);
         $app['config']->set('audit.retention_months', 24);
         $app->singleton(DemoHashChains::class);
@@ -38,8 +39,10 @@ abstract class TestCase extends Orchestra
 
         (require __DIR__ . '/../database/migrations/2026_11_05_000002_create_audit_chain_anchors_table.php')->up();
 
-        foreach (['alpha_audit_logs', 'beta_audit_logs', 'soft_audit_logs', 'scoped_audit_logs'] as $name) {
-            $schema->create($name, function(Blueprint $table): void {
+        $tables = [[$schema, 'alpha_audit_logs'], [$schema, 'beta_audit_logs'], [$schema, 'soft_audit_logs'], [$schema, 'scoped_audit_logs'], [$this->app['db']->connection('elsewhere')->getSchemaBuilder(), 'elsewhere_audit_logs']];
+
+        foreach ($tables as [$builder, $name]) {
+            $builder->create($name, function(Blueprint $table): void {
                 $table->id();
                 $table->string('payload');
                 $table->char('hash', 64);
