@@ -15,6 +15,7 @@ Composer package (`script-development/laravel-retention`, MIT) holding the fleet
 3. **No migration collision.** `RetentionServiceProvider` publishes the anchor migration (`retention-audit-migrations`) and never loads it. `RetentionServiceProvider::it_never_loads_the_anchor_migration` pins this.
 4. **The territory keeps its recipes.** Hashing a row, locking a chain and recording a prune go through `Audit\Contracts\HashChains`; nothing territory-specific lives in `src/`.
 5. **A MAC fault is reported, never repaired.** `ChainStartResolver` returns `anchorValid: false` and the stored hash; the prune refuses, a verifier reports, a writer decides for itself.
+6. **The prune reads and deletes the raw table, and the count it reports is the count it removed.** Every prune query goes through `newModelQuery()`, past a model's global scopes and soft deletes; a chunk whose delete removes other than the rows it verified rolls back and is refused (`PrunedRowCountMismatch`). `PruneAuditChainsTest` pins both with `SoftAuditLog` and `ScopedAuditLog`.
 
 Doctrine is the war room's: `final readonly` Actions with one `execute()`, constructor injection, no facades in Actions, every mutation in a transaction, no cascades. Comments follow the three tiers; the `@audit-snapshot-retry-safety` marker on the prune's transaction is Tier 1 and stays with that closure.
 

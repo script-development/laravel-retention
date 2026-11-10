@@ -38,12 +38,14 @@ abstract class TestCase extends Orchestra
 
         (require __DIR__ . '/../database/migrations/2026_11_05_000002_create_audit_chain_anchors_table.php')->up();
 
-        foreach (['alpha_audit_logs', 'beta_audit_logs'] as $name) {
+        foreach (['alpha_audit_logs', 'beta_audit_logs', 'soft_audit_logs', 'scoped_audit_logs'] as $name) {
             $schema->create($name, function(Blueprint $table): void {
                 $table->id();
                 $table->string('payload');
                 $table->char('hash', 64);
                 $table->timestamp('created_at');
+                $table->timestamp('deleted_at')->nullable();
+                $table->boolean('hidden')->default(false);
             });
         }
     }

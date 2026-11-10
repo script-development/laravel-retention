@@ -22,6 +22,8 @@ use ScriptDevelopment\LaravelRetention\Tests\Support\BetaAuditLog;
 use ScriptDevelopment\LaravelRetention\Tests\Support\Chains;
 use ScriptDevelopment\LaravelRetention\Tests\Support\DemoHashChains;
 use ScriptDevelopment\LaravelRetention\Tests\Support\LockMarkingSQLiteGrammar;
+use ScriptDevelopment\LaravelRetention\Tests\Support\ScopedAuditLog;
+use ScriptDevelopment\LaravelRetention\Tests\Support\SoftAuditLog;
 use ScriptDevelopment\LaravelRetention\Tests\TestCase;
 
 final class PruneAuditChainsTest extends TestCase
@@ -300,6 +302,57 @@ final class PruneAuditChainsTest extends TestCase
 
         self::assertSame($ids, Chains::ids(AlphaAuditLog::class));
         self::assertFalse(AuditChainAnchor::query()->exists());
+    }
+
+    #[Test]
+    public function it_physically_removes_the_rows_of_a_chain_whose_model_soft_deletes(): void
+    {
+        $this->demo()->chainModels = [SoftAuditLog::class];
+        $ids = Chains::append(SoftAuditLog::class, '2020-01-01 10:00:00', '2020-02-01 10:00:00', '2028-01-01 10:00:00');
+
+        $result = $this->prune();
+
+        self::assertSame(['soft_audit_logs' => 2], $result->rowsPruned);
+        self::assertSame([$ids[2]], DB::table('soft_audit_logs')->orderBy('id')->pluck('id')->map(intval(...))->all(), 'the pruned rows are gone from the table, not stamped deleted_at');
+        self::assertNull(Chains::firstBreak(SoftAuditLog::class));
+    }
+
+    #[Test]
+    public function it_reads_a_chain_past_its_models_global_scopes(): void
+    {
+        $this->demo()->chainModels = [ScopedAuditLog::class];
+        $ids = Chains::append(ScopedAuditLog::class, '2020-01-01 10:00:00', '2028-01-01 10:00:00', '2020-02-01 10:00:00');
+        DB::table('scoped_audit_logs')->where('id', $ids[1])->update(['hidden' => true]);
+
+        $result = $this->prune();
+
+        self::assertSame([], $result->refusedAtRowId, 'a sound chain is refused when the scope hides its kept row');
+        self::assertSame(['scoped_audit_logs' => 1], $result->rowsPruned);
+        self::assertSame([$ids[1], $ids[2]], Chains::ids(ScopedAuditLog::class));
+        self::assertNull(Chains::firstBreak(ScopedAuditLog::class));
+    }
+
+    #[Test]
+    public function it_refuses_and_rolls_back_a_chunk_whose_delete_removed_fewer_rows_than_it_verified(): void
+    {
+        $ids = Chains::append(AlphaAuditLog::class, '2020-01-01 10:00:00', '2020-02-01 10:00:00', '2028-01-01 10:00:00');
+        $vanished = false;
+        DB::connection()->beforeExecuting(function(string $sql) use (&$vanished, $ids): void {
+            if (!$vanished && str_starts_with($sql, 'delete from "alpha_audit_logs"')) {
+                $vanished = true;
+                DB::table('alpha_audit_logs')->where('id', $ids[1])->delete();
+            }
+        });
+
+        $result = $this->prune();
+
+        self::assertTrue($vanished);
+        self::assertSame([], $result->rowsPruned);
+        self::assertSame(['alpha_audit_logs' => $ids[0]], $result->refusedAtRowId);
+        self::assertSame(1, $result->exitCode());
+        self::assertSame($ids, Chains::ids(AlphaAuditLog::class), 'the chunk rolled back, the row removed inside it included');
+        self::assertFalse(AuditChainAnchor::query()->exists());
+        self::assertSame([], $this->demo()->prunes);
     }
 
     #[Test]

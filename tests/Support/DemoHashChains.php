@@ -14,7 +14,7 @@ use UnexpectedValueException;
 use function is_string;
 
 /**
- * A territory stand-in: two chains, one recipe, and a log of every call the
+ * A territory stand-in: its chains, one recipe, and a log of every call the
  * package makes, so tests can assert order and arguments.
  */
 final class DemoHashChains implements HashChains
@@ -27,9 +27,12 @@ final class DemoHashChains implements HashChains
 
     public ?Closure $onRecordPrune = null;
 
+    /** @var list<class-string<Model>> */
+    public array $chainModels = [AlphaAuditLog::class, BetaAuditLog::class];
+
     public function chains(): array
     {
-        return [AlphaAuditLog::class, BetaAuditLog::class];
+        return $this->chainModels;
     }
 
     public function recompute(Model $row, string $previousHash): string

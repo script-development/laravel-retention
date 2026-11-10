@@ -28,7 +28,7 @@ final class Chains
 
         foreach ($timestamps as $index => $timestamp) {
             $model = new $modelClass;
-            $newest = $model->newQuery()->orderByDesc('id')->value('hash');
+            $newest = $model->newModelQuery()->orderByDesc('id')->value('hash');
             $previousHash = is_string($newest) ? $newest : new ChainStartResolver()->resolve($model->getTable(), TestCase::SEED)->hash;
             $createdAt = CarbonImmutable::parse($timestamp);
             $payload = 'row ' . $index . ' at ' . $timestamp;
@@ -62,7 +62,7 @@ final class Chains
         $previousHash = $chainStart->hash;
         $demo = new DemoHashChains;
 
-        foreach ($model->newQuery()->orderBy('id')->get() as $row) {
+        foreach ($model->newModelQuery()->orderBy('id')->get() as $row) {
             if (!hash_equals($demo->recompute($row, $previousHash), (string) $row->getAttribute('hash'))) {
                 return (int) $row->getKey();
             }
@@ -80,6 +80,6 @@ final class Chains
      */
     public static function ids(string $modelClass): array
     {
-        return array_map(intval(...), new $modelClass()->newQuery()->orderBy('id')->pluck('id')->all());
+        return array_map(intval(...), new $modelClass()->newModelQuery()->orderBy('id')->pluck('id')->all());
     }
 }
