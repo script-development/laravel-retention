@@ -11,10 +11,10 @@
     ],
     "require": {
         "php": "^8.5",
-        "illuminate/container": "^13.39",
-        "illuminate/contracts": "^13.39",
-        "illuminate/database": "^13.39",
-        "illuminate/support": "^13.39",
+        "illuminate/container": "^13.40",
+        "illuminate/contracts": "^13.40",
+        "illuminate/database": "^13.40",
+        "illuminate/support": "^13.40",
         "nesbot/carbon": "^3.0"
     },
     "require-dev": {

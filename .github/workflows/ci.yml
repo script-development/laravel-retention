@@ -67,8 +67,10 @@ jobs:
             - name: Install the lowest dependencies
               run: composer update --prefer-lowest --prefer-stable --prefer-dist --no-progress --no-interaction
 
+            # Composer refuses a release under a security advisory, so the floor is the first release without one
+            # (PKSA-yxbx-3c9s-cjt9 covers laravel/framework below 13.40.0).
             - name: Assert the floor resolved (testbench pulls laravel/framework, which replaces illuminate/*)
-              run: composer show laravel/framework | grep -qE '^versions.*\* v13\.39\.'
+              run: composer show laravel/framework | grep -qE '^versions.*\* v13\.40\.'
 
             - name: Tests
               run: composer test

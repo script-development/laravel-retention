@@ -19,3 +19,9 @@ Review findings declined on purpose, with the reason. A finding listed here is n
 **Finding** (PR #2, `src/Audit/PruneAuditChains.php`): "The prune recomputes hashes for stored rows without imposing a size budget on the row data passed to the territory implementation."
 
 **Declined.** `recompute()` is the territory's own recipe, run over the territory's own audit rows, which its schema bounds. The chunk bounds the row count, and a byte budget in the package would refuse rows the territory's writer legitimately wrote.
+
+## ab009b376222 — the published anchor migration creates its table unconditionally
+
+**Finding** (PR #1, `database/migrations/2026_11_05_000002_create_audit_chain_anchors_table.php`): "Publishing the anchor migration can block deployment when the table already exists."
+
+**Declined.** A territory publishes this migration only when its schema has no `audit_chain_anchors` table; `README.md` says so. A territory that publishes it over an existing table runs both creates on every fresh database, its test database included, so its own CI fails before anything deploys. A `hasTable` guard would turn that loud failure into a silent skip over a table whose columns may differ from the ones the resolver and the prune read. Follow-up: WR-2926.

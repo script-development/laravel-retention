@@ -4,7 +4,7 @@ Composer package (`script-development/laravel-retention`, MIT) holding the fleet
 
 ## Stack
 
-- PHP ^8.5, `illuminate/*` ^13.39 (the floor every consumer ran at extraction, 2026-11-10). `check-lowest` installs the floor and runs the suite on it.
+- PHP ^8.5, `illuminate/*` ^13.40: the first `laravel/framework` release outside security advisory PKSA-yxbx-3c9s-cjt9, which Composer refuses to install. `check-lowest` installs the floor and runs the suite on it.
 - Tests: PHPUnit 12 on Orchestra Testbench, SQLite in memory. PHPStan level max with Larastan over `src/`. Pint (war-room canon). Infection, `--min-msi=90`. Line coverage gate 100 %.
 - CI: `.github/workflows/ci.yml`; `main` requires the `ci-passed` rollup, which passes only when every lane reports `success` and refuses an empty set.
 

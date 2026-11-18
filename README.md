@@ -22,7 +22,7 @@ Config read: `audit.hash_seed` and `audit.retention_months` (at least 1).
 ### Adopting
 
 1. `composer require script-development/laravel-retention`.
-2. A territory without `audit_chain_anchors`: `php artisan vendor:publish --tag=retention-audit-migrations`, then migrate. The package never loads the migration itself, so a territory that already has the table is untouched.
+2. A territory without `audit_chain_anchors`: `php artisan vendor:publish --tag=retention-audit-migrations`, then migrate. A territory that already has the table does not publish it; the package never loads the migration itself, so that territory is untouched.
 3. Bind your implementation: `$this->app->bind(HashChains::class, YourChains::class);`.
    Every chain's model and `audit_chain_anchors` must be on the prune's own (default) connection; the prune refuses to run otherwise.
 4. Point your writer's empty-table path and your verifier's walk at `ChainStartResolver`, so all three agree where a chain starts.
