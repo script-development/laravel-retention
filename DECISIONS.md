@@ -20,6 +20,8 @@ Review findings declined on purpose, with the reason. A finding listed here is n
 
 **Declined.** `recompute()` is the territory's own recipe, run over the territory's own audit rows, which its schema bounds. The chunk bounds the row count, and a byte budget in the package would refuse rows the territory's writer legitimately wrote.
 
+**Risk accepted by the Commander (2026-11-20)**, when the same mechanism was re-filed as `ef54ba386ef3` (PR #2, "pruning limits row count but leaves row loading and hash work without a byte budget"). A row too large for the worker fails loudly: the process dies inside the chunk's transaction, which never commits, so nothing is deleted and no anchor moves.
+
 ## ab009b376222 — the published anchor migration creates its table unconditionally
 
 **Finding** (PR #1, `database/migrations/2026_11_05_000002_create_audit_chain_anchors_table.php`): "Publishing the anchor migration can block deployment when the table already exists."
