@@ -5,7 +5,7 @@ Retention and erasure kernel for Script Development and Back to code Laravel ter
 - **Audit retention (landed, unreleased):** a prune for append-only, hash-chained audit tables that keeps the remaining chain verifiable. Extracted from entreezuil (EZ-0037, WR-2926).
 - **Erasure on a retention clock (not here yet):** anonymisation in place, with coverage gates that refuse a table or column the erasure route does not place. To be extracted from lokalekeuze.
 
-Status: no release yet. Nothing here is new behaviour: every line came from a production territory.
+Status: no release yet. Every behaviour here came from a production territory, with one exception ruled by the Commander on 2026-11-20: the prune refuses at a chain row with no creation time, where entreezuil's schema made such a row impossible.
 
 ## Audit retention
 
