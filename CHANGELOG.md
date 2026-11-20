@@ -8,4 +8,4 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
-- Where an audit hash chain starts, extracted from entreezuil (WR-2926): `ChainStartResolver`, `ChainStart`, `AnchorMac`, the `AuditChainAnchor` model, and a publishable `audit_chain_anchors` migration that is never auto-loaded.
+- The audit-retention half, extracted from entreezuil (WR-2926): `PruneAuditChains`, `ChainStartResolver`, `ChainStart`, `AnchorMac`, `AuditChainAnchor`, `AuditChainPruneResultDto`, the `HashChains` contract, and a publishable `audit_chain_anchors` migration that is never auto-loaded.

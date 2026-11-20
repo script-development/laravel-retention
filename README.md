@@ -2,12 +2,32 @@
 
 Retention and erasure kernel for Script Development and Back to code Laravel territories.
 
-- **Erasure on a retention clock:** anonymisation in place, with coverage gates that refuse a table or column the erasure route does not place.
-- **Audit retention:** a prune for append-only, hash-chained audit tables that keeps the remaining chain verifiable.
+- **Audit retention (landed, unreleased):** a prune for append-only, hash-chained audit tables that keeps the remaining chain verifiable. Extracted from entreezuil (EZ-0037, WR-2926).
+- **Erasure on a retention clock (not here yet):** anonymisation in place, with coverage gates that refuse a table or column the erasure route does not place. To be extracted from lokalekeuze.
 
-The audit-retention half ships the `audit_chain_anchors` migration for publishing (`php artisan vendor:publish --tag=retention-audit-migrations`). A territory whose schema already has that table does not publish it.
+Status: no release yet. Every behaviour here came from a production territory, with one exception ruled by the Commander on 2026-11-20: the prune refuses at a chain row with no creation time, where entreezuil's schema made such a row impossible.
 
-Status: under construction, no release yet. Extracted from two production territories; nothing here is new behaviour.
+## Audit retention
+
+The package owns the algorithm; the territory keeps its recipes.
+
+| Package | Territory |
+|---|---|
+| `PruneAuditChains`: prefix-only, chunked, verify-before-delete, anchor move and prune record in one transaction, three attempts | implements `Audit\Contracts\HashChains`: its chains, `recompute()`, its writer's chain lock, where a prune is recorded |
+| `ChainStartResolver`: where a chain starts (anchor or seed), with the anchor's MAC checked and reported | its writer and verifier read the chain start through it |
+| `AuditChainAnchor` (table `audit_chain_anchors`) and `AnchorMac` | its artisan command, schedule and config |
+
+Config read: `audit.hash_seed` and `audit.retention_months` (at least 1).
+
+### Adopting
+
+1. `composer require script-development/laravel-retention`.
+2. Set `audit.hash_seed` (the seed your writer starts a chain from) and `audit.retention_months` (at least 1) in your config. The package ships no defaults: without both, the container cannot build `PruneAuditChains`.
+3. A territory without `audit_chain_anchors`: `php artisan vendor:publish --tag=retention-audit-migrations`, then migrate. A territory that already has the table does not publish it; the package never loads the migration itself, so that territory is untouched.
+4. Bind your implementation: `$this->app->bind(HashChains::class, YourChains::class);`.
+   Every chain's model and `audit_chain_anchors` must be on the prune's own (default) connection; the prune refuses to run otherwise.
+5. Point your writer's empty-table path and your verifier's walk at `ChainStartResolver`, so all three agree where a chain starts.
+6. Call `PruneAuditChains::execute()` from a scheduled command; exit with the result's `exitCode()`.
 
 ## License
 
