@@ -46,7 +46,7 @@ abstract class TestCase extends Orchestra
                 $table->id();
                 $table->string('payload');
                 $table->char('hash', 64);
-                $table->timestamp('created_at');
+                $table->timestamp('created_at')->nullable();
                 $table->timestamp('deleted_at')->nullable();
                 $table->boolean('hidden')->default(false);
             });

@@ -200,6 +200,34 @@ final class PruneAuditChainsTest extends TestCase
     }
 
     #[Test]
+    public function it_refuses_at_a_first_row_with_no_creation_time(): void
+    {
+        $ids = Chains::append(AlphaAuditLog::class, '2020-01-01 10:00:00', '2020-02-01 10:00:00', '2028-01-01 10:00:00');
+        AlphaAuditLog::query()->whereKey($ids[0])->toBase()->update(['created_at' => null]);
+
+        $result = $this->prune();
+
+        self::assertSame([], $result->rowsPruned);
+        self::assertSame(['alpha_audit_logs' => $ids[0]], $result->refusedAtRowId);
+        self::assertSame(1, $result->exitCode());
+        self::assertSame($ids, Chains::ids(AlphaAuditLog::class));
+    }
+
+    #[Test]
+    public function it_prunes_the_verified_rows_before_a_row_with_no_creation_time_and_refuses_there(): void
+    {
+        $ids = Chains::append(AlphaAuditLog::class, '2020-01-01 10:00:00', '2020-02-01 10:00:00', '2020-03-01 10:00:00', '2028-01-01 10:00:00');
+        AlphaAuditLog::query()->whereKey($ids[1])->toBase()->update(['created_at' => null]);
+
+        $result = $this->prune();
+
+        self::assertSame(['alpha_audit_logs' => 1], $result->rowsPruned);
+        self::assertSame(['alpha_audit_logs' => $ids[1]], $result->refusedAtRowId);
+        self::assertSame(1, $result->exitCode());
+        self::assertSame([$ids[1], $ids[2], $ids[3]], Chains::ids(AlphaAuditLog::class));
+    }
+
+    #[Test]
     public function it_refuses_a_forged_anchor_and_deletes_nothing(): void
     {
         $ids = Chains::append(AlphaAuditLog::class, '2020-01-01 10:00:00', '2020-02-01 10:00:00', '2026-12-01 10:00:00', '2028-01-01 10:00:00');

@@ -153,9 +153,10 @@ final readonly class PruneAuditChains
                 return $createdAt instanceof CarbonInterface && $createdAt->lt($cutoff);
             });
             $lastRow = $expired->last();
+            $untimedRowId = $this->untimedRowId($rows->get($expired->count()));
 
             if (!$lastRow instanceof Model) {
-                return [0, null];
+                return [0, $untimedRowId];
             }
 
             $chainStart = $this->chainStartResolver->resolve($table, $this->hashSeed, lockForUpdate: true);
@@ -198,8 +199,22 @@ final readonly class PruneAuditChains
 
             $this->hashChains->recordPrune($table, $expired->count(), $lastRowId, $cutoff);
 
-            return [$expired->count(), null];
+            return [$expired->count(), $untimedRowId];
         }, 3);
+    }
+
+    /**
+     * The row that ended the expired prefix, when it ended it by having no
+     * creation time: it can never expire, so it holds every row behind it in the
+     * chain and is reported as the chain's refusal.
+     */
+    private function untimedRowId(?Model $stoppedAt): ?int
+    {
+        if (!$stoppedAt instanceof Model || $stoppedAt->getAttribute('created_at') instanceof CarbonInterface) {
+            return null;
+        }
+
+        return $this->rowId($stoppedAt);
     }
 
     private function rowId(Model $row): int
