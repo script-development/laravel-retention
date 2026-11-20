@@ -8,7 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [0.1.0] — 2026-11-20
 
-**First release.** The audit-retention half only; the erasure half is not extracted yet. Requires PHP 8.5 and `illuminate/*` 13.40 or later.
+**First release.** The audit-retention half only; the erasure half is not extracted yet. Requires `php` `^8.5` and `illuminate/*` `^13.40`, as `composer.json` declares.
 
 ### Added
 
