@@ -18,7 +18,7 @@
         "nesbot/carbon": "^3.0"
     },
     "require-dev": {
-        "infection/infection": "^0.34.0",
+        "infection/infection": "^0.34.0 || ^0.35.0",
         "larastan/larastan": "^3.9",
         "laravel/pint": "^1.18",
         "orchestra/testbench": "^11.0",
